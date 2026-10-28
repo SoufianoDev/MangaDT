@@ -210,4 +210,8 @@ jobs:
             tag="build-$GITHUB_RUN_NUMBER-$GITHUB_RUN_ATTEMPT"
             title="MangaDT build $GITHUB_RUN_NUMBER"
           fi
-          gh release create "$tag" release-assets/*             --repo "$GITHUB_REPOSITORY"             --title "$title"             --target "$GITHUB_SHA"             --notes "Automated builds for Android, Linux and Windows. Verify downloads using SHA256SUMS."
+          gh release create "$tag" release-assets/* \\
+            --repo "$GITHUB_REPOSITORY" \\
+            --title "$title" \\
+            --target "$GITHUB_SHA" \\
+            --notes "Automated builds for Android, Linux and Windows. Verify downloads using SHA256SUMS."
