@@ -25,10 +25,6 @@ jobs:
       - name: Check out source
         uses: actions/checkout@v6
 
-      - name: Check out pinned Kotatsu parser source
-        shell: bash
-        run: bash .github/scripts/setup-pinned-kotatsu-parsers.sh
-
       - name: Set up JDK 21
         uses: actions/setup-java@v5
         with:
@@ -70,10 +66,6 @@ jobs:
     steps:
       - name: Check out source
         uses: actions/checkout@v6
-
-      - name: Check out pinned Kotatsu parser source
-        shell: bash
-        run: bash .github/scripts/setup-pinned-kotatsu-parsers.sh
 
       - name: Set up JDK 21
         uses: actions/setup-java@v5
@@ -120,10 +112,6 @@ jobs:
     steps:
       - name: Check out source
         uses: actions/checkout@v6
-
-      - name: Check out pinned Kotatsu parser source
-        shell: bash
-        run: bash .github/scripts/setup-pinned-kotatsu-parsers.sh
 
       - name: Set up JDK 21
         uses: actions/setup-java@v5
