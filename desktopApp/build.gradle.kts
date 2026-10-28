@@ -12,7 +12,7 @@ dependencies {
     implementation(compose.desktop.currentOs)
     implementation(libs.kotlinx.coroutinesSwing)
 
-    implementation(compose.uiToolingPreview)
+    implementation(libs.compose.uiToolingPreview)
     implementation(libs.okhttp)
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)
