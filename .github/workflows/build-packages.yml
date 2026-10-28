@@ -43,7 +43,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Build debug APK
-        run: ./gradlew --no-daemon :androidApp:assembleDebug
+        run: ./gradlew --no-daemon --no-configuration-cache :androidApp:assembleDebug
 
       - name: Prepare APK
         run: |
@@ -82,7 +82,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Build Linux installer
-        run: ./gradlew --no-daemon :desktopApp:packageDeb
+        run: ./gradlew --no-daemon --no-configuration-cache :desktopApp:packageDeb
 
       - name: Prepare Linux package
         shell: bash
