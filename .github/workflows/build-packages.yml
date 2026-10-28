@@ -50,7 +50,7 @@ jobs:
           set -euo pipefail
           mkdir -p dist
           cp androidApp/build/outputs/apk/debug/androidApp-debug.apk dist/MangaDT-android-debug.apk
-          sha256sum dist/MangaDT-android-debug.apk > dist/MangaDT-android-debug.apk.sha256
+          (cd dist && sha256sum MangaDT-android-debug.apk > MangaDT-android-debug.apk.sha256)
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
@@ -96,7 +96,7 @@ jobs:
           fi
           mkdir -p dist
           cp "$package" dist/MangaDT-linux-amd64.deb
-          sha256sum dist/MangaDT-linux-amd64.deb > dist/MangaDT-linux-amd64.deb.sha256
+          (cd dist && sha256sum MangaDT-linux-amd64.deb > MangaDT-linux-amd64.deb.sha256)
 
       - name: Build AppImage from the packaged desktop application
         shell: bash
@@ -158,7 +158,7 @@ jobs:
           chmod +x dist/MangaDT-x86_64.AppImage
           file dist/MangaDT-x86_64.AppImage | grep -q 'ELF'
           test -s dist/MangaDT-x86_64.AppImage
-          sha256sum dist/MangaDT-x86_64.AppImage > dist/MangaDT-x86_64.AppImage.sha256
+          (cd dist && sha256sum MangaDT-x86_64.AppImage > MangaDT-x86_64.AppImage.sha256)
 
       - name: Upload Linux packages
         uses: actions/upload-artifact@v4
