@@ -61,7 +61,7 @@ jobs:
           retention-days: 14
 
   linux-deb:
-    name: Build Linux DEB
+    name: Build Linux DEB and AppImage
     runs-on: ubuntu-latest
     steps:
       - name: Check out source
@@ -73,10 +73,10 @@ jobs:
           distribution: temurin
           java-version: "21"
 
-      - name: Install Debian packaging tools
+      - name: Install Debian packaging and AppImage tools
         run: |
           sudo apt-get update
-          sudo apt-get install --no-install-recommends -y fakeroot dpkg-dev
+          sudo apt-get install --no-install-recommends -y fakeroot dpkg-dev file
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
@@ -84,7 +84,7 @@ jobs:
       - name: Build Linux installer
         run: ./gradlew --no-daemon --no-configuration-cache :desktopApp:packageDeb
 
-      - name: Prepare Linux package
+      - name: Prepare Linux DEB
         shell: bash
         run: |
           set -euo pipefail
@@ -98,16 +98,78 @@ jobs:
           cp "$package" dist/MangaDT-linux-amd64.deb
           sha256sum dist/MangaDT-linux-amd64.deb > dist/MangaDT-linux-amd64.deb.sha256
 
-      - name: Upload Linux package artifact
+      - name: Build AppImage from the packaged desktop application
+        shell: bash
+        run: |
+          set -euo pipefail
+          tools="$RUNNER_TEMP/appimage-tools"
+          appdir="$RUNNER_TEMP/MangaDT.AppDir"
+          mkdir -p "$tools" "$appdir"
+
+          # Reuse the same self-contained jpackage application image as the DEB.
+          dpkg-deb --extract dist/MangaDT-linux-amd64.deb "$appdir"
+          test -x "$appdir/opt/com.abht.manga-dt/bin/com.abht.manga_dt"
+          test -f "$appdir/opt/com.abht.manga-dt/lib/runtime/release"
+
+          cat > "$appdir/AppRun" <<'APP_RUN'
+          #!/usr/bin/env sh
+          set -eu
+          : "${APPDIR:=$(dirname "$(readlink -f "$0")")}"
+          exec "$APPDIR/opt/com.abht.manga-dt/bin/com.abht.manga_dt" "$@"
+          APP_RUN
+          chmod 755 "$appdir/AppRun"
+
+          cat > "$appdir/mangadt.desktop" <<'DESKTOP'
+          [Desktop Entry]
+          Type=Application
+          Name=MangaDT
+          Comment=Manga and comics reader
+          Exec=AppRun
+          Icon=mangadt
+          Terminal=false
+          Categories=Utility;Graphics;
+          DESKTOP
+
+          install -Dm644 androidApp/src/main/res/mipmap-xxxhdpi/ic_launcher.png "$appdir/mangadt.png"
+          ln -sf mangadt.png "$appdir/.DirIcon"
+
+          # Pin and verify the AppImage packaging toolchain.
+          curl --fail --location --retry 3 \
+            https://github.com/linuxdeploy/linuxdeploy/releases/download/1-alpha-20251107-1/linuxdeploy-x86_64.AppImage \
+            -o "$tools/linuxdeploy-x86_64.AppImage"
+          echo "c20cd71e3a4e3b80c3483cef793cda3f4e990aca14014d23c544ca3ce1270b4d  $tools/linuxdeploy-x86_64.AppImage" | sha256sum --check
+          chmod +x "$tools/linuxdeploy-x86_64.AppImage"
+
+          APPIMAGE_EXTRACT_AND_RUN=1 "$tools/linuxdeploy-x86_64.AppImage" \
+            --appdir "$appdir" \
+            --executable "$appdir/opt/com.abht.manga-dt/bin/com.abht.manga_dt" \
+            --desktop-file "$appdir/mangadt.desktop" \
+            --icon-file "$appdir/mangadt.png"
+
+          curl --fail --location --retry 3 \
+            https://github.com/AppImage/appimagetool/releases/download/1.9.1/appimagetool-x86_64.AppImage \
+            -o "$tools/appimagetool-x86_64.AppImage"
+          echo "ed4ce84f0d9caff66f50bcca6ff6f35aae54ce8135408b3fa33abfc3cb384eb0  $tools/appimagetool-x86_64.AppImage" | sha256sum --check
+          chmod +x "$tools/appimagetool-x86_64.AppImage"
+
+          APPIMAGE_EXTRACT_AND_RUN=1 ARCH=x86_64 APPIMAGETOOL_APP_NAME=MangaDT \
+            "$tools/appimagetool-x86_64.AppImage" "$appdir" "$PWD/dist/MangaDT-x86_64.AppImage"
+
+          chmod +x dist/MangaDT-x86_64.AppImage
+          file dist/MangaDT-x86_64.AppImage | grep -q 'ELF'
+          test -s dist/MangaDT-x86_64.AppImage
+          sha256sum dist/MangaDT-x86_64.AppImage > dist/MangaDT-x86_64.AppImage.sha256
+
+      - name: Upload Linux packages
         uses: actions/upload-artifact@v4
         with:
-          name: mangadt-linux-deb
+          name: mangadt-linux-packages
           path: dist/*
           if-no-files-found: error
           retention-days: 14
 
-  windows-msi:
-    name: Build Windows MSI
+  windows-packages:
+    name: Build Windows MSI and EXE installers
     runs-on: windows-latest
     steps:
       - name: Check out source
@@ -138,27 +200,35 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Build Windows installer
-        run: .\gradlew.bat --no-daemon --no-configuration-cache :desktopApp:packageMsi
+      - name: Build Windows MSI and EXE installers
+        run: .\gradlew.bat --no-daemon --no-configuration-cache :desktopApp:packageMsi :desktopApp:packageExe
 
-      - name: Prepare Windows package
+      - name: Prepare Windows packages
         shell: pwsh
         run: |
-          $package = Get-ChildItem 'desktopApp/build/compose/binaries/main/msi' -Filter '*.msi' -File |
+          $msi = Get-ChildItem 'desktopApp/build/compose/binaries/main/msi' -Filter '*.msi' -File |
             Select-Object -First 1
-          if (-not $package) {
-            Get-ChildItem 'desktopApp/build/compose/binaries' -Recurse -File | Select-Object -ExpandProperty FullName
-            throw 'Gradle finished without producing an MSI package.'
-          }
-          New-Item -ItemType Directory -Force -Path dist | Out-Null
-          Copy-Item $package.FullName 'dist/MangaDT-windows-x64.msi'
-          $hash = (Get-FileHash 'dist/MangaDT-windows-x64.msi' -Algorithm SHA256).Hash.ToLower()
-          "$hash  MangaDT-windows-x64.msi" | Set-Content 'dist/MangaDT-windows-x64.msi.sha256'
+          $exe = Get-ChildItem 'desktopApp/build/compose/binaries/main/exe' -Filter '*.exe' -File |
+            Select-Object -First 1
 
-      - name: Upload Windows package artifact
+          if (-not $msi -or -not $exe) {
+            Get-ChildItem 'desktopApp/build/compose/binaries' -Recurse -File | Select-Object -ExpandProperty FullName
+            throw 'Gradle did not produce both MSI and EXE installers.'
+          }
+
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          Copy-Item $msi.FullName 'dist/MangaDT-windows-x64.msi'
+          Copy-Item $exe.FullName 'dist/MangaDT-windows-x64.exe'
+
+          $msiHash = (Get-FileHash 'dist/MangaDT-windows-x64.msi' -Algorithm SHA256).Hash.ToLower()
+          "$msiHash  MangaDT-windows-x64.msi" | Set-Content 'dist/MangaDT-windows-x64.msi.sha256'
+          $exeHash = (Get-FileHash 'dist/MangaDT-windows-x64.exe' -Algorithm SHA256).Hash.ToLower()
+          "$exeHash  MangaDT-windows-x64.exe" | Set-Content 'dist/MangaDT-windows-x64.exe.sha256'
+
+      - name: Upload Windows packages
         uses: actions/upload-artifact@v4
         with:
-          name: mangadt-windows-msi
+          name: mangadt-windows-packages
           path: dist/*
           if-no-files-found: error
           retention-days: 14
@@ -166,7 +236,7 @@ jobs:
   publish-release:
     name: Publish release assets
     runs-on: ubuntu-latest
-    needs: [android-apk, linux-deb, windows-msi]
+    needs: [android-apk, linux-deb, windows-packages]
     if: >-
       ${{
         success() &&
@@ -194,9 +264,16 @@ jobs:
           set -euo pipefail
           test -s release-assets/MangaDT-android-debug.apk
           test -s release-assets/MangaDT-linux-amd64.deb
+          test -s release-assets/MangaDT-x86_64.AppImage
           test -s release-assets/MangaDT-windows-x64.msi
+          test -s release-assets/MangaDT-windows-x64.exe
           cd release-assets
-          sha256sum MangaDT-android-debug.apk MangaDT-linux-amd64.deb MangaDT-windows-x64.msi > SHA256SUMS
+          sha256sum \
+            MangaDT-android-debug.apk \
+            MangaDT-linux-amd64.deb \
+            MangaDT-x86_64.AppImage \
+            MangaDT-windows-x64.msi \
+            MangaDT-windows-x64.exe > SHA256SUMS
 
       - name: Create GitHub Release
         env:
@@ -210,8 +287,8 @@ jobs:
             tag="build-$GITHUB_RUN_NUMBER-$GITHUB_RUN_ATTEMPT"
             title="MangaDT build $GITHUB_RUN_NUMBER"
           fi
-          gh release create "$tag" release-assets/* \\
-            --repo "$GITHUB_REPOSITORY" \\
-            --title "$title" \\
-            --target "$GITHUB_SHA" \\
-            --notes "Automated builds for Android, Linux and Windows. Verify downloads using SHA256SUMS."
+          gh release create "$tag" release-assets/* \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "$title" \
+            --target "$GITHUB_SHA" \
+            --notes "Automated Android, Linux, and Windows builds. Verify download files with SHA256SUMS."
