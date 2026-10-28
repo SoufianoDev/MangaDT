@@ -41,17 +41,28 @@ A modern, fast, and feature-rich **Manga & Comics Reader** built with **Kotlin M
 ## 🚀 Building and Running
 
 ### Android
+
 ```bash
 ./gradlew :androidApp:assembleDebug
 ./gradlew :androidApp:installDebug
 ```
 
 ### Desktop (Linux / macOS / Windows)
+
 ```bash
 ./gradlew :desktopApp:run
 ```
 
+## Continuous builds and downloads
+
+GitHub Actions can build an Android debug APK, a Linux Debian package, and a Windows MSI installer. Successful builds are attached to the workflow run as temporary artifacts. Versioned releases provide direct download links for each package.
+
+See [the build and publishing guide](docs/BUILD-AND-PUBLISH.md) for artifact downloads, release instructions, package names, checksums, and GitHub Pages setup. Published packages appear under [Releases](https://github.com/SoufianoDev/MangaDT/releases).
+
+The web workflow builds the Kotlin/Wasm target and deploys it to GitHub Pages after the Pages publishing source is enabled in repository settings. The web UI currently has platform-specific implementations that do not yet support manga source queries, browser downloads, or LAN sync.
+
 ---
 
 ## 📄 License
+
 This project is open-source under the [GNU General Public License v3.0 (GPL-3.0)](https://www.gnu.org/licenses/gpl-3.0.html).
