@@ -34,7 +34,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Build Kotlin/Wasm distribution
-        run: ./gradlew --no-daemon :webApp:wasmJsBrowserDistribution
+        run: ./gradlew --no-daemon --no-configuration-cache :webApp:wasmJsBrowserDistribution
 
       - name: Verify generated website
         run: test -s webApp/build/dist/wasmJs/productionExecutable/index.html
