@@ -55,9 +55,9 @@ A modern, fast, and feature-rich **Manga & Comics Reader** built with **Kotlin M
 
 ## Continuous builds and downloads
 
-GitHub Actions can build an Android debug APK, a Linux Debian package, and a Windows MSI installer. Successful builds are attached to the workflow run as temporary artifacts. Versioned releases provide direct download links for each package.
+GitHub Actions builds an Android debug APK, a Linux DEB and AppImage, and Windows MSI and EXE installers. Successful builds appear as temporary workflow artifacts. Versioned releases provide direct download links for all five packages.
 
-See [the build and publishing guide](docs/BUILD-AND-PUBLISH.md) for artifact downloads, release instructions, package names, checksums, and GitHub Pages setup. Published packages appear under [Releases](https://github.com/SoufianoDev/MangaDT/releases).
+See [the build and publishing guide](docs/BUILD-AND-PUBLISH.md) for installation steps, artifact downloads, release instructions, package names, and checksums. Published packages appear under [Releases](https://github.com/SoufianoDev/MangaDT/releases).
 
 The web workflow builds the Kotlin/Wasm target and deploys it to GitHub Pages after the Pages publishing source is enabled in repository settings. The web UI currently has platform-specific implementations that do not yet support manga source queries, browser downloads, or LAN sync.
 
