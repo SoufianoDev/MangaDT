@@ -36,3 +36,13 @@ include(":androidApp")
 include(":desktopApp")
 include(":shared")
 include(":webApp")
+
+// CI may provide this pinned source checkout to avoid relying on a JitPack artifact.
+if (file(".ci/kotatsu-parsers-redo").isDirectory) {
+    includeBuild(".ci/kotatsu-parsers-redo") {
+        dependencySubstitution {
+            substitute(module("com.github.Kotatsu-Redo:kotatsu-parsers-redo"))
+                .using(project(":"))
+        }
+    }
+}
