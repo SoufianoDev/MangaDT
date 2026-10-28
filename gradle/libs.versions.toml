@@ -18,7 +18,7 @@ kotlinx-coroutines = "1.11.0"
 material3 = "1.11.0-alpha07"
 coil3 = "3.5.0"
 navigation-compose = "2.9.2"
-kotatsu-parsers = "204c9ee"
+kotatsu-parsers = "204c9ee032"
 okhttp = "4.12.0"
 ktor = "3.0.0"
 
