@@ -23,7 +23,7 @@ compose.desktop {
         mainClass = "com.abht.manga_dt.MainKt"
 
         nativeDistributions {
-            targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
+            targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Exe, TargetFormat.Deb)
             packageName = "com.abht.manga_dt"
             packageVersion = "1.0.0"
         }
