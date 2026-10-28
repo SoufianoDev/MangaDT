@@ -76,7 +76,7 @@ jobs:
       - name: Install Debian packaging and AppImage tools
         run: |
           sudo apt-get update
-          sudo apt-get install --no-install-recommends -y fakeroot dpkg-dev file
+          sudo apt-get install --no-install-recommends -y fakeroot dpkg-dev file patchelf desktop-file-utils
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
